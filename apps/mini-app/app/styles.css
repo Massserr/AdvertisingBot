@@ -1,0 +1,204 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f7f8;
+  --text: #172026;
+  --muted: #65727c;
+  --line: #d9e0e5;
+  --accent: #0f8b8d;
+  --accent-strong: #0a6d6f;
+  --surface: #ffffff;
+  --warn: #b45309;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px 88px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 17px;
+}
+
+.iconButton,
+.tabbar button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.roleSwitch,
+.toolbar,
+.ownerActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.roleSwitch button,
+.ownerActions button,
+.balanceBand button,
+.itemSide button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  min-height: 44px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.roleSwitch button.active,
+.balanceBand button,
+.itemSide button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.balanceBand {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #e8f3f3;
+  border: 1px solid #c7e3e3;
+  border-radius: 8px;
+}
+
+.balanceBand div {
+  display: grid;
+  gap: 5px;
+}
+
+.balanceBand span,
+.itemCard p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.balanceBand strong {
+  font-size: 21px;
+}
+
+.toolbar select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--surface);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.itemCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.itemCard > div:first-child {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.itemSide {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.itemSide button {
+  min-width: 96px;
+}
+
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+}
+
+@media (max-width: 520px) {
+  .balanceBand,
+  .itemCard {
+    grid-template-columns: 1fr;
+  }
+
+  .itemSide {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    justify-items: stretch;
+  }
+}

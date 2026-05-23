@@ -1,0 +1,648 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  limited
+  blocked
+}
+
+enum UserRole {
+  advertiser
+  owner
+  admin
+}
+
+enum ProfileType {
+  advertiser
+  owner
+}
+
+enum ChannelStatus {
+  draft
+  pending_verification
+  verified
+  suspicious
+  hidden
+  blocked
+}
+
+enum PublicationMode {
+  automatic
+  manual
+}
+
+enum ModerationStatus {
+  not_required
+  awaiting_moderation
+  moderation_approved
+  moderation_rejected
+}
+
+enum AdOrderStatus {
+  created
+  awaiting_moderation
+  moderation_rejected
+  funds_frozen
+  sent_to_owner
+  accepted_by_owner
+  declined_by_owner
+  expired_by_owner_timeout
+  scheduled_for_publication
+  auto_publish_failed
+  published
+  awaiting_advertiser_confirmation
+  approved_by_advertiser
+  dispute_opened
+  completed
+  refunded
+  canceled
+}
+
+enum AdPostType {
+  text
+  text_image
+  text_button
+}
+
+enum DisputeReason {
+  post_not_published
+  invalid_link
+  wrong_channel
+  wrong_time
+  content_mismatch
+  deleted_early
+  format_violated
+  other
+}
+
+enum DisputeStatus {
+  opened
+  resolved_for_advertiser
+  resolved_for_owner
+  partially_refunded
+  canceled
+}
+
+enum FinancialTransactionType {
+  deposit
+  freeze
+  unfreeze
+  refund
+  owner_reward
+  platform_fee
+  payout_requested
+  payout_processing
+  payout_completed
+  payout_rejected
+  payout_failed
+  manual_adjustment
+}
+
+enum FinancialTransactionStatus {
+  pending
+  completed
+  failed
+  canceled
+}
+
+enum PaymentProvider {
+  yookassa
+}
+
+enum PaymentStatus {
+  pending
+  waiting_for_capture
+  succeeded
+  canceled
+  failed
+}
+
+enum PayoutProvider {
+  manual
+  yookassa
+}
+
+enum PayoutStatus {
+  requested
+  processing
+  paid
+  rejected
+  failed
+}
+
+enum PayoutRecipientType {
+  physical_person
+  self_employed
+  individual_entrepreneur
+  legal_entity
+}
+
+enum CustomFieldEntity {
+  advertiser_profile
+  owner_profile
+}
+
+enum CustomFieldType {
+  text
+  number
+  date
+  long_text
+  url
+  select
+  multi_select
+  boolean
+}
+
+enum NotificationChannel {
+  telegram
+  mini_app
+  admin
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  failed
+  read
+}
+
+enum BroadcastAudience {
+  all_users
+  advertisers
+  owners
+  single_user
+}
+
+model User {
+  id                String              @id @default(cuid())
+  telegramId        String              @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  status            UserStatus          @default(active)
+  roles             UserRole[]          @default([])
+  currentRole       UserRole?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  advertiserProfile AdvertiserProfile?
+  ownerProfile      OwnerProfile?
+  payments          Payment[]
+  transactions      FinancialTransaction[]
+  notifications     Notification[]
+  adminActions      AdminAuditLog[]      @relation("AdminActor")
+  broadcastTargets  BroadcastTarget[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AdvertiserProfile {
+  id               String                 @id @default(cuid())
+  userId           String                 @unique
+  name             String
+  description      String?
+  balanceAvailable Decimal                @default(0) @db.Decimal(14, 2)
+  balanceFrozen    Decimal                @default(0) @db.Decimal(14, 2)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  user             User                   @relation(fields: [userId], references: [id])
+  orders           AdOrder[]
+  customValues     CustomFieldValue[]     @relation("AdvertiserCustomValues")
+
+  @@index([createdAt])
+}
+
+model OwnerProfile {
+  id                  String               @id @default(cuid())
+  userId              String               @unique
+  name                String
+  description         String?
+  balanceEarned       Decimal              @default(0) @db.Decimal(14, 2)
+  balanceAvailable    Decimal              @default(0) @db.Decimal(14, 2)
+  balanceProcessing   Decimal              @default(0) @db.Decimal(14, 2)
+  balanceWithdrawn    Decimal              @default(0) @db.Decimal(14, 2)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  user                User                 @relation(fields: [userId], references: [id])
+  channels            Channel[]
+  orders              AdOrder[]
+  payoutMethods       PayoutMethod[]
+  payoutRequests      PayoutRequest[]
+  customValues        CustomFieldValue[]   @relation("OwnerCustomValues")
+
+  @@index([createdAt])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  isVisible   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  channels    Channel[]
+}
+
+model PlacementFormat {
+  id          String                  @id @default(cuid())
+  code        String                  @unique
+  name        String
+  description String?
+  topHours    Int
+  feedHours   Int
+  isActive    Boolean                 @default(true)
+  sortOrder   Int                     @default(0)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  prices      ChannelPlacementPrice[]
+  orders      AdOrder[]
+}
+
+model Channel {
+  id                String                  @id @default(cuid())
+  ownerProfileId    String
+  categoryId        String
+  telegramChatId    String?
+  title             String
+  link              String
+  description       String?
+  subscribersCount  Int                     @default(0)
+  publicationMode   PublicationMode         @default(manual)
+  status            ChannelStatus           @default(pending_verification)
+  botCanPost        Boolean                 @default(false)
+  botCanPostMedia   Boolean                 @default(false)
+  verifiedAt        DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  ownerProfile      OwnerProfile            @relation(fields: [ownerProfileId], references: [id])
+  category          Category                @relation(fields: [categoryId], references: [id])
+  prices            ChannelPlacementPrice[]
+  orders            AdOrder[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([subscribersCount])
+  @@index([createdAt])
+}
+
+model ChannelPlacementPrice {
+  id                String          @id @default(cuid())
+  channelId         String
+  placementFormatId String
+  price             Decimal         @db.Decimal(14, 2)
+  currency          String          @default("RUB")
+  isEnabled         Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  channel           Channel         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  placementFormat   PlacementFormat @relation(fields: [placementFormatId], references: [id])
+
+  @@unique([channelId, placementFormatId])
+  @@index([price])
+}
+
+model AdOrder {
+  id                                String             @id @default(cuid())
+  advertiserProfileId               String
+  ownerProfileId                    String
+  channelId                         String
+  placementFormatId                 String
+  amount                            Decimal            @db.Decimal(14, 2)
+  currency                          String             @default("RUB")
+  platformCommissionBps             Int
+  status                            AdOrderStatus      @default(created)
+  moderationStatus                  ModerationStatus   @default(not_required)
+  moderationComment                 String?
+  postType                          AdPostType         @default(text)
+  postText                          String
+  mediaFileId                       String?
+  mediaUrl                          String?
+  buttonText                        String?
+  buttonUrl                         String?
+  publicationDate                   DateTime
+  publicationWindowStart            DateTime
+  publicationWindowEnd              DateTime
+  scheduledPublicationAt            DateTime?
+  publishedAt                       DateTime?
+  publishedPostUrl                  String?
+  autoPublishError                  String?
+  ownerResponseDeadline             DateTime
+  advertiserConfirmationDeadline    DateTime?
+  manualPublicationDeadline         DateTime?
+  createdAt                         DateTime           @default(now())
+  updatedAt                         DateTime           @updatedAt
+
+  advertiserProfile                 AdvertiserProfile  @relation(fields: [advertiserProfileId], references: [id])
+  ownerProfile                      OwnerProfile       @relation(fields: [ownerProfileId], references: [id])
+  channel                           Channel            @relation(fields: [channelId], references: [id])
+  placementFormat                   PlacementFormat    @relation(fields: [placementFormatId], references: [id])
+  statusHistory                     AdOrderStatusLog[]
+  transactions                      FinancialTransaction[]
+  disputes                          Dispute[]
+
+  @@index([status])
+  @@index([moderationStatus])
+  @@index([channelId])
+  @@index([ownerProfileId])
+  @@index([advertiserProfileId])
+  @@index([scheduledPublicationAt])
+  @@index([ownerResponseDeadline])
+  @@index([advertiserConfirmationDeadline])
+}
+
+model AdOrderStatusLog {
+  id          String        @id @default(cuid())
+  orderId     String
+  fromStatus  AdOrderStatus?
+  toStatus    AdOrderStatus
+  comment     String?
+  actorUserId String?
+  createdAt   DateTime      @default(now())
+
+  order       AdOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                  String        @id @default(cuid())
+  userId              String
+  provider            PaymentProvider @default(yookassa)
+  externalPaymentId   String?       @unique
+  idempotencyKey      String        @unique
+  amount              Decimal       @db.Decimal(14, 2)
+  currency            String        @default("RUB")
+  status              PaymentStatus @default(pending)
+  confirmationUrl     String?
+  rawPayload          Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user                User          @relation(fields: [userId], references: [id])
+  transactions        FinancialTransaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model FinancialTransaction {
+  id             String                      @id @default(cuid())
+  userId         String
+  orderId        String?
+  paymentId      String?
+  payoutRequestId String?
+  type           FinancialTransactionType
+  status         FinancialTransactionStatus  @default(completed)
+  amount         Decimal                     @db.Decimal(14, 2)
+  currency       String                      @default("RUB")
+  adminComment   String?
+  metadata       Json?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  user           User                        @relation(fields: [userId], references: [id])
+  order          AdOrder?                    @relation(fields: [orderId], references: [id])
+  payment        Payment?                    @relation(fields: [paymentId], references: [id])
+  payoutRequest  PayoutRequest?              @relation(fields: [payoutRequestId], references: [id])
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([payoutRequestId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PayoutMethod {
+  id              String              @id @default(cuid())
+  ownerProfileId  String
+  provider        PayoutProvider      @default(manual)
+  recipientType   PayoutRecipientType
+  details         Json
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  ownerProfile    OwnerProfile        @relation(fields: [ownerProfileId], references: [id])
+  payoutRequests  PayoutRequest[]
+
+  @@index([ownerProfileId])
+  @@index([provider])
+}
+
+model PayoutRequest {
+  id                String          @id @default(cuid())
+  ownerProfileId    String
+  payoutMethodId    String?
+  provider          PayoutProvider  @default(manual)
+  recipientType     PayoutRecipientType
+  amount            Decimal         @db.Decimal(14, 2)
+  currency          String          @default("RUB")
+  status            PayoutStatus    @default(requested)
+  externalPayoutId  String?
+  payoutDetails     Json
+  errorLog          Json?
+  adminComment      String?
+  retryCount        Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  processedAt       DateTime?
+
+  ownerProfile      OwnerProfile    @relation(fields: [ownerProfileId], references: [id])
+  payoutMethod      PayoutMethod?   @relation(fields: [payoutMethodId], references: [id])
+  transactions      FinancialTransaction[]
+
+  @@index([ownerProfileId])
+  @@index([status])
+  @@index([provider])
+  @@index([externalPayoutId])
+}
+
+model Dispute {
+  id              String        @id @default(cuid())
+  orderId         String
+  openedByUserId  String
+  reason          DisputeReason
+  status          DisputeStatus @default(opened)
+  message         String?
+  adminComment    String?
+  resolution      Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  resolvedAt      DateTime?
+
+  order           AdOrder       @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CustomFieldBlock {
+  id          String                  @id @default(cuid())
+  entity      CustomFieldEntity
+  title       String
+  slug        String
+  sortOrder   Int                     @default(0)
+  isActive    Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  fields      CustomFieldDefinition[]
+
+  @@unique([entity, slug])
+}
+
+model CustomFieldDefinition {
+  id          String             @id @default(cuid())
+  blockId     String?
+  entity      CustomFieldEntity
+  slug        String
+  label       String
+  type        CustomFieldType
+  options     Json?
+  isRequired  Boolean            @default(false)
+  isActive    Boolean            @default(true)
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  block       CustomFieldBlock?  @relation(fields: [blockId], references: [id])
+  values      CustomFieldValue[]
+
+  @@unique([entity, slug])
+  @@index([entity])
+}
+
+model CustomFieldValue {
+  id                    String                 @id @default(cuid())
+  fieldId               String
+  advertiserProfileId   String?
+  ownerProfileId        String?
+  value                 Json
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  field                 CustomFieldDefinition  @relation(fields: [fieldId], references: [id])
+  advertiserProfile     AdvertiserProfile?     @relation("AdvertiserCustomValues", fields: [advertiserProfileId], references: [id], onDelete: Cascade)
+  ownerProfile          OwnerProfile?          @relation("OwnerCustomValues", fields: [ownerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId])
+  @@index([advertiserProfileId])
+  @@index([ownerProfileId])
+}
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String?
+  channel     NotificationChannel
+  status      NotificationStatus  @default(queued)
+  type        String
+  title       String
+  body        String
+  payload     Json?
+  error       String?
+  createdAt   DateTime            @default(now())
+  sentAt      DateTime?
+  readAt      DateTime?
+
+  user        User?               @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model BroadcastCampaign {
+  id              String             @id @default(cuid())
+  audience        BroadcastAudience
+  targetUserId    String?
+  title           String
+  body            String
+  status          NotificationStatus @default(queued)
+  rateLimitPerMin Int                @default(20)
+  createdByUserId String?
+  createdAt       DateTime           @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  targets         BroadcastTarget[]
+}
+
+model BroadcastTarget {
+  id           String             @id @default(cuid())
+  campaignId   String
+  userId       String
+  status       NotificationStatus @default(queued)
+  error        String?
+  sentAt       DateTime?
+
+  campaign     BroadcastCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id])
+
+  @@unique([campaignId, userId])
+  @@index([status])
+}
+
+model PlatformSetting {
+  key         String    @id
+  value       Json
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+}
+
+model AdminAuditLog {
+  id            String    @id @default(cuid())
+  actorUserId   String?
+  action        String
+  entityType    String
+  entityId      String?
+  before        Json?
+  after         Json?
+  comment       String?
+  createdAt     DateTime  @default(now())
+
+  actor         User?     @relation("AdminActor", fields: [actorUserId], references: [id])
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model WebhookLog {
+  id            String    @id @default(cuid())
+  provider      String
+  eventId       String?
+  eventType     String?
+  idempotencyKey String?
+  payload       Json
+  processedAt   DateTime?
+  error         String?
+  createdAt     DateTime  @default(now())
+
+  @@index([provider])
+  @@index([eventId])
+  @@index([idempotencyKey])
+  @@index([createdAt])
+}

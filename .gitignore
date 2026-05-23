@@ -1,0 +1,14 @@
+node_modules
+.pnpm-store
+.corepack
+.next
+out
+dist
+*.tsbuildinfo
+coverage
+.env
+.env.local
+*.log
+apps/api/prisma/migrations/dev.db
+
+.vercel
