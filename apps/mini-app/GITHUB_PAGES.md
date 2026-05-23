@@ -21,6 +21,12 @@ https://username.github.io/repository-name/
 MINI_APP_URL=https://username.github.io/repository-name/
 ```
 
+Для рабочего Этапа 1 Mini App должна обращаться к backend API по публичному HTTPS URL. В настройках GitHub-репозитория добавьте `Settings` -> `Secrets and variables` -> `Actions` -> `Variables`:
+
+```text
+NEXT_PUBLIC_API_URL=https://api.example.com/api
+```
+
 После изменения `.env` перезапустить bot:
 
 ```powershell
@@ -33,3 +39,5 @@ corepack pnpm --filter @adbot/bot dev
 Workflow использует `NEXT_PUBLIC_BASE_PATH` равный имени репозитория. Это нужно, чтобы Next.js корректно грузил ассеты на GitHub Pages по адресу `/repository-name/`.
 
 Если позже подключите custom domain, base path можно будет убрать.
+
+Если backend ещё не опубликован, GitHub Pages покажет интерфейс, но авторизация и создание профилей будут работать только с локальным API или после публикации API на VPS/cloud.

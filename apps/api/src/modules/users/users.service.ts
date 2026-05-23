@@ -6,6 +6,17 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { advertiserProfile: true, ownerProfile: true }
+    });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return user;
+  }
+
   async ensureAdvertiserProfile(userId: string, input: { name: string; description?: string }) {
     const user = await this.requireUser(userId);
     const roles = new Set(user.roles);
@@ -56,7 +67,8 @@ export class UsersService {
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { currentRole: role }
+      data: { currentRole: role },
+      include: { advertiserProfile: true, ownerProfile: true }
     });
   }
 

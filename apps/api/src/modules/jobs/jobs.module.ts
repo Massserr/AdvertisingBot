@@ -1,10 +1,8 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { NOTIFICATION_QUEUE, ORDER_QUEUE } from "./jobs.constants";
 import { JobsService } from "./jobs.service";
-
-export const ORDER_QUEUE = "orders";
-export const NOTIFICATION_QUEUE = "notifications";
 
 @Module({
   imports: [

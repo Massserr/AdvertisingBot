@@ -7,9 +7,10 @@
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "prisma:generate": "pnpm --filter @adbot/api prisma:generate",
-    "prisma:migrate": "pnpm --filter @adbot/api prisma:migrate",
-    "db:seed": "pnpm --filter @adbot/api db:seed"
+    "prisma:generate": "pnpm --dir apps/api prisma:generate",
+    "prisma:migrate": "pnpm --dir apps/api prisma:migrate",
+    "db:push": "pnpm --dir apps/api db:push",
+    "db:seed": "pnpm --dir apps/api db:seed"
   },
   "devDependencies": {
     "typescript": "^5.6.3"

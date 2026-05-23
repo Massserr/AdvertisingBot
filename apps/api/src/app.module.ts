@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AdminModule } from "./modules/admin/admin.module";
+import { AppController } from "./app.controller";
 import { AuthModule } from "./modules/auth/auth.module";
 import { CatalogModule } from "./modules/catalog/catalog.module";
 import { FinanceModule } from "./modules/finance/finance.module";
@@ -12,7 +13,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ envFilePath: ["../../.env", ".env"], isGlobal: true }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -22,6 +23,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     JobsModule,
     NotificationsModule,
     AdminModule
-  ]
+  ],
+  controllers: [AppController]
 })
 export class AppModule {}

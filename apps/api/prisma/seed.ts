@@ -1,4 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { config as loadDotenv } from "dotenv";
+
+loadDotenv({ path: "../../.env" });
 
 const INITIAL_CATEGORIES = [
   { slug: "bloggers", name: "Блогеры" },

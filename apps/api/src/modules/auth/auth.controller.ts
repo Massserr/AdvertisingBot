@@ -9,4 +9,9 @@ export class AuthController {
   authenticate(@Body("initData") initData: string) {
     return this.telegramAuth.authenticateMiniApp(initData);
   }
+
+  @Post("dev")
+  authenticateDevUser() {
+    return this.telegramAuth.authenticateDevUser();
+  }
 }

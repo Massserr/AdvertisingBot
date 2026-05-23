@@ -1,7 +1,7 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import { Queue } from "bullmq";
-import { NOTIFICATION_QUEUE, ORDER_QUEUE } from "./jobs.module";
+import { NOTIFICATION_QUEUE, ORDER_QUEUE } from "./jobs.constants";
 
 @Injectable()
 export class JobsService {

@@ -20,7 +20,24 @@ export class TelegramAuthService {
 
   async authenticateMiniApp(initData: string) {
     const user = this.verifyInitData(initData);
+    return this.upsertTelegramUser(user);
+  }
 
+  async authenticateDevUser() {
+    const enabled = this.config.get<string>("TELEGRAM_DEV_AUTH_ENABLED") === "true";
+    if (!enabled) {
+      throw new UnauthorizedException("Development auth is disabled");
+    }
+
+    return this.upsertTelegramUser({
+      id: 100000001,
+      username: "dev_adbot_user",
+      first_name: "Dev",
+      last_name: "User"
+    });
+  }
+
+  private upsertTelegramUser(user: TelegramInitUser) {
     return this.prisma.user.upsert({
       where: { telegramId: String(user.id) },
       update: {

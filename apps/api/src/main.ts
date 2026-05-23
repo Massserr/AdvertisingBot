@@ -7,12 +7,18 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
-  const allowedOrigins = [config.get<string>("MINI_APP_URL"), config.get<string>("ADMIN_APP_URL")].filter(
+  const extraOrigins = config
+    .get<string>("CORS_ORIGINS", "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const allowedOrigins = [config.get<string>("MINI_APP_URL"), config.get<string>("ADMIN_APP_URL"), ...extraOrigins].filter(
     (origin): origin is string => Boolean(origin)
   );
+  const corsOrigins = allowedOrigins.length > 0 ? allowedOrigins : true;
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: corsOrigins,
     credentials: true
   });
   app.setGlobalPrefix("api");
