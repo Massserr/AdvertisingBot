@@ -40,6 +40,7 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_ENABLE_DEV_AUTH: ${{ vars.NEXT_PUBLIC_ENABLE_DEV_AUTH }}
         run: pnpm --filter @adbot/mini-app build
 
       - name: Upload Pages artifact
