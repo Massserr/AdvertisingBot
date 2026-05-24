@@ -1,5 +1,6 @@
-import { Body, Controller, Param, Patch, Post } from "@nestjs/common";
-import { PayoutRecipientType, PayoutStatus, Prisma } from "@prisma/client";
+import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { PayoutRecipientType, PayoutStatus, Prisma, UserRole } from "@prisma/client";
+import { LedgerService } from "./ledger.service";
 import { PaymentsService } from "./payments.service";
 import { PayoutsService } from "./payouts.service";
 
@@ -7,8 +8,24 @@ import { PayoutsService } from "./payouts.service";
 export class FinanceController {
   constructor(
     private readonly payments: PaymentsService,
-    private readonly payouts: PayoutsService
+    private readonly payouts: PayoutsService,
+    private readonly ledger: LedgerService
   ) {}
+
+  @Get("advertisers/:userId/balance")
+  getAdvertiserBalance(@Param("userId") userId: string) {
+    return this.payments.getAdvertiserBalance(userId);
+  }
+
+  @Get("users/:userId/payments")
+  listUserPayments(@Param("userId") userId: string) {
+    return this.payments.listUserPayments(userId);
+  }
+
+  @Get("users/:userId/transactions")
+  listUserTransactions(@Param("userId") userId: string) {
+    return this.ledger.listUserTransactions(userId);
+  }
 
   @Post("payments/yookassa/top-up")
   createTopUp(@Body() body: { userId: string; amount: string; currency?: string }) {
@@ -16,8 +33,24 @@ export class FinanceController {
   }
 
   @Post("payments/yookassa/webhook")
-  handleYookassaWebhook(@Body() body: { eventId?: string; eventType?: string; payload: unknown }) {
-    return this.payments.handleYookassaWebhook(body);
+  handleYookassaWebhook(@Body() body: unknown) {
+    return this.payments.handleYookassaWebhook(body as Parameters<PaymentsService["handleYookassaWebhook"]>[0]);
+  }
+
+  @Post("payments/:id/mock-succeed")
+  mockSucceedPayment(@Param("id") paymentId: string) {
+    return this.payments.mockSucceedPayment(paymentId);
+  }
+
+  @Post("manual-adjustments")
+  manualAdjustment(@Body() body: { userId: string; amount: string; currency?: string; comment: string; role: UserRole }) {
+    return this.ledger.manualAdjustment({
+      userId: body.userId,
+      amount: body.amount,
+      currency: body.currency ?? "RUB",
+      comment: body.comment,
+      role: body.role
+    });
   }
 
   @Post("payouts")

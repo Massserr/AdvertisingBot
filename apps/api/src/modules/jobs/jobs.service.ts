@@ -11,18 +11,27 @@ export class JobsService {
   ) {}
 
   scheduleOwnerTimeout(orderId: string, runAt: Date) {
-    return this.orderQueue.add("owner-timeout", { orderId }, { delay: Math.max(0, runAt.getTime() - Date.now()) });
+    return this.orderQueue.add("owner-timeout", { orderId }, this.jobOptions(`owner-timeout:${orderId}`, runAt));
   }
 
   scheduleAutoPublication(orderId: string, runAt: Date) {
-    return this.orderQueue.add("auto-publication", { orderId }, { delay: Math.max(0, runAt.getTime() - Date.now()) });
+    return this.orderQueue.add("auto-publication", { orderId }, this.jobOptions(`auto-publication:${orderId}`, runAt));
   }
 
   scheduleAdvertiserAutoConfirmation(orderId: string, runAt: Date) {
-    return this.orderQueue.add("advertiser-auto-confirmation", { orderId }, { delay: Math.max(0, runAt.getTime() - Date.now()) });
+    return this.orderQueue.add("advertiser-auto-confirmation", { orderId }, this.jobOptions(`advertiser-auto-confirmation:${orderId}`, runAt));
   }
 
   queueTelegramNotification(notificationId: string) {
     return this.notificationQueue.add("telegram-notification", { notificationId });
+  }
+
+  private jobOptions(jobId: string, runAt: Date) {
+    return {
+      jobId,
+      delay: Math.max(0, runAt.getTime() - Date.now()),
+      removeOnComplete: true,
+      removeOnFail: 100
+    };
   }
 }

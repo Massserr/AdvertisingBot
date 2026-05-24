@@ -6,8 +6,32 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class LedgerService {
   constructor(private readonly prisma: PrismaService) {}
 
+  listUserTransactions(userId: string) {
+    return this.prisma.financialTransaction.findMany({
+      where: { userId },
+      include: {
+        order: {
+          include: {
+            channel: true,
+            placementFormat: true
+          }
+        },
+        payment: true,
+        payoutRequest: true
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
   async creditDeposit(input: { userId: string; paymentId: string; amount: Prisma.Decimal.Value; currency: string }) {
     return this.prisma.$transaction(async (tx) => {
+      const existingDeposit = await tx.financialTransaction.findFirst({
+        where: { paymentId: input.paymentId, type: FinancialTransactionType.deposit }
+      });
+      if (existingDeposit) {
+        return existingDeposit;
+      }
+
       const profile = await tx.advertiserProfile.findUnique({ where: { userId: input.userId } });
       if (!profile) {
         throw new NotFoundException("Advertiser profile not found");
@@ -33,6 +57,13 @@ export class LedgerService {
 
   async freezeAdvertiserFunds(input: { advertiserProfileId: string; orderId: string; amount: Prisma.Decimal.Value; currency: string }) {
     return this.prisma.$transaction(async (tx) => {
+      const existingFreeze = await tx.financialTransaction.findFirst({
+        where: { orderId: input.orderId, type: FinancialTransactionType.freeze }
+      });
+      if (existingFreeze) {
+        return existingFreeze;
+      }
+
       const profile = await tx.advertiserProfile.findUnique({
         where: { id: input.advertiserProfileId },
         include: { user: true }
@@ -54,10 +85,23 @@ export class LedgerService {
         }
       });
 
+      const order = await tx.adOrder.findUnique({ where: { id: input.orderId } });
+
       await tx.adOrder.update({
         where: { id: input.orderId },
         data: { status: AdOrderStatus.funds_frozen }
       });
+
+      if (order && order.status !== AdOrderStatus.funds_frozen) {
+        await tx.adOrderStatusLog.create({
+          data: {
+            orderId: input.orderId,
+            fromStatus: order.status,
+            toStatus: AdOrderStatus.funds_frozen,
+            comment: "Advertiser funds frozen"
+          }
+        });
+      }
 
       return tx.financialTransaction.create({
         data: {
@@ -71,7 +115,7 @@ export class LedgerService {
     });
   }
 
-  async unfreezeToAdvertiser(input: { orderId: string; comment?: string }) {
+  async unfreezeToAdvertiser(input: { orderId: string; comment?: string; finalStatus?: AdOrderStatus }) {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.adOrder.findUnique({
         where: { id: input.orderId },
@@ -89,9 +133,20 @@ export class LedgerService {
         }
       });
 
+      const finalStatus = input.finalStatus ?? AdOrderStatus.refunded;
+
       await tx.adOrder.update({
         where: { id: order.id },
-        data: { status: AdOrderStatus.refunded }
+        data: { status: finalStatus }
+      });
+
+      await tx.adOrderStatusLog.create({
+        data: {
+          orderId: order.id,
+          fromStatus: order.status,
+          toStatus: finalStatus,
+          comment: input.comment
+        }
       });
 
       return tx.financialTransaction.create({
@@ -140,6 +195,15 @@ export class LedgerService {
       await tx.adOrder.update({
         where: { id: order.id },
         data: { status: AdOrderStatus.completed }
+      });
+
+      await tx.adOrderStatusLog.create({
+        data: {
+          orderId: order.id,
+          fromStatus: order.status,
+          toStatus: AdOrderStatus.completed,
+          comment: "Funds distributed between owner and platform"
+        }
       });
 
       await tx.financialTransaction.create({

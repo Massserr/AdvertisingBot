@@ -28,6 +28,15 @@ textarea {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .shell {
   min-height: 100vh;
   max-width: 760px;
@@ -91,6 +100,13 @@ h2 {
   margin-bottom: 14px;
 }
 
+.catalogFilters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
 .notice {
   margin-bottom: 12px;
   padding: 10px 12px;
@@ -104,7 +120,15 @@ h2 {
   line-height: 1.45;
 }
 
-.profileForm {
+.successText {
+  color: #0b6b47;
+  line-height: 1.45;
+}
+
+.profileForm,
+.channelForm,
+.orderForm,
+.topUpForm {
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -113,7 +137,16 @@ h2 {
   border-radius: 8px;
 }
 
-.profileForm label {
+.channelForm,
+.orderForm,
+.topUpForm {
+  margin-bottom: 16px;
+}
+
+.profileForm label,
+.channelForm label,
+.orderForm label,
+.topUpForm label {
   display: grid;
   gap: 6px;
   color: var(--muted);
@@ -121,7 +154,16 @@ h2 {
 }
 
 .profileForm input,
-.profileForm textarea {
+.profileForm textarea,
+.channelForm input,
+.channelForm textarea,
+.channelForm select,
+.orderForm input,
+.orderForm textarea,
+.orderForm select,
+.topUpForm input,
+.catalogFilters input,
+.catalogFilters select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -131,12 +173,19 @@ h2 {
 }
 
 .profileForm button,
-.centerState button {
+.centerState button,
+.channelForm > button,
+.orderForm > button,
+.topUpForm button {
   min-height: 44px;
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
   border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .roleSwitch button,
@@ -220,6 +269,35 @@ h2 {
   min-width: 0;
 }
 
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chips span {
+  border: 1px solid #c7e3e3;
+  background: #eef8f8;
+  color: var(--accent-strong);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.chips a {
+  min-height: 28px;
+  border: 1px solid #c7e3e3;
+  background: #eef8f8;
+  color: var(--accent-strong);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
 .itemSide {
   display: grid;
   gap: 8px;
@@ -228,6 +306,223 @@ h2 {
 
 .itemSide button {
   min-width: 96px;
+}
+
+.formTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.formTitleRow button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.formGrid,
+.pricesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.timeRange {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pricesGrid label {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fbfcfd;
+}
+
+.pricesGrid span {
+  min-height: 32px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 10px;
+}
+
+.sectionHeader > span {
+  min-width: 34px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.emptyState {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+}
+
+.emptyState p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.ordersBlock {
+  margin-top: 16px;
+}
+
+.orderCard {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.orderCard > div {
+  display: grid;
+  gap: 5px;
+}
+
+.ownerOrderCard {
+  gap: 12px;
+}
+
+.orderCardHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.orderCardHeader > span {
+  min-height: 28px;
+  border: 1px solid #c7e3e3;
+  background: #eef8f8;
+  color: var(--accent-strong);
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.orderCard p,
+.orderCard > span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.orderCard > span,
+.postPreview {
+  display: -webkit-box;
+  max-height: 38px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mutedText {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.publishedLink {
+  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.orderActionPanel {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.orderActionPanel label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.orderActionPanel input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--text);
+  background: #fff;
+}
+
+.orderActionPanel button,
+.orderActions button {
+  min-height: 42px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.orderActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.orderActions .secondaryDangerButton {
+  border-color: #f0c6c2;
+  background: #fff1f0;
+  color: #a1261b;
+}
+
+.transactionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.transactionRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.transactionRow span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .tabbar {
@@ -248,7 +543,12 @@ h2 {
 
 @media (max-width: 520px) {
   .balanceBand,
-  .itemCard {
+  .itemCard,
+  .formGrid,
+  .pricesGrid,
+  .orderCardHeader,
+  .orderActions,
+  .catalogFilters {
     grid-template-columns: 1fr;
   }
 

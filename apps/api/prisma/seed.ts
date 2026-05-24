@@ -4,9 +4,9 @@ import { config as loadDotenv } from "dotenv";
 loadDotenv({ path: "../../.env" });
 
 const INITIAL_CATEGORIES = [
-  { slug: "bloggers", name: "Блогеры" },
-  { slug: "humor", name: "Юмор" },
-  { slug: "news", name: "Новости" }
+  { slug: "bloggers", name: "Блогеры", sortOrder: 10 },
+  { slug: "humor", name: "Юмор", sortOrder: 20 },
+  { slug: "news", name: "Новости", sortOrder: 30 }
 ] as const;
 
 const INITIAL_PLACEMENT_FORMATS = [
@@ -15,14 +15,16 @@ const INITIAL_PLACEMENT_FORMATS = [
     name: "1/24",
     topHours: 1,
     feedHours: 24,
-    description: "1 hour in top, 24 hours in feed"
+    sortOrder: 10,
+    description: "1 час в топе, 24 часа в ленте"
   },
   {
     code: "2_48",
     name: "2/48",
     topHours: 2,
     feedHours: 48,
-    description: "2 hours in top, 48 hours in feed"
+    sortOrder: 20,
+    description: "2 часа в топе, 48 часов в ленте"
   }
 ] as const;
 
@@ -32,7 +34,11 @@ async function main() {
   for (const category of INITIAL_CATEGORIES) {
     await prisma.category.upsert({
       where: { slug: category.slug },
-      update: { name: category.name, isVisible: true },
+      update: {
+        name: category.name,
+        isVisible: true,
+        sortOrder: category.sortOrder
+      },
       create: category
     });
   }
@@ -45,6 +51,7 @@ async function main() {
         description: format.description,
         topHours: format.topHours,
         feedHours: format.feedHours,
+        sortOrder: format.sortOrder,
         isActive: true
       },
       create: format
@@ -52,13 +59,17 @@ async function main() {
   }
 
   const settings = [
-    ["platform_commission_bps", 2000, "Platform commission in basis points"],
-    ["moderation_enabled", false, "Whether ad post moderation is enabled"],
-    ["owner_response_timeout_hours", 48, "Owner response timeout"],
-    ["advertiser_confirmation_timeout_hours", 48, "Advertiser auto-confirm timeout"],
-    ["manual_publication_timeout_hours", 2, "Manual publication timeout after autopost failure"],
-    ["payout_mode", "manual", "Current payout execution mode"],
-    ["allowed_payout_recipient_types", ["physical_person", "self_employed", "individual_entrepreneur", "legal_entity"], "Allowed payout recipient types"]
+    ["platform_commission_bps", 2000, "Комиссия платформы в базисных пунктах"],
+    ["moderation_enabled", false, "Включена ли модерация рекламных постов"],
+    ["owner_response_timeout_hours", 48, "Срок ответа владельца канала"],
+    ["advertiser_confirmation_timeout_hours", 48, "Срок автоподтверждения рекламодателем"],
+    ["manual_publication_timeout_hours", 2, "Срок ручной публикации после ошибки автопубликации"],
+    ["payout_mode", "manual", "Текущий режим выплат"],
+    [
+      "allowed_payout_recipient_types",
+      ["physical_person", "self_employed", "individual_entrepreneur", "legal_entity"],
+      "Разрешенные типы получателей выплат"
+    ]
   ] as const;
 
   for (const [key, value, description] of settings) {
@@ -71,11 +82,10 @@ async function main() {
 }
 
 main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
   .finally(async () => {
     await prisma.$disconnect();
-  })
-  .catch(async (error) => {
-    console.error(error);
-    await prisma.$disconnect();
-    process.exit(1);
   });

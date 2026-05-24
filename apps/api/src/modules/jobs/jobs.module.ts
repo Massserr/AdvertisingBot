@@ -1,11 +1,14 @@
 import { BullModule } from "@nestjs/bullmq";
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { OrdersModule } from "../orders/orders.module";
 import { NOTIFICATION_QUEUE, ORDER_QUEUE } from "./jobs.constants";
 import { JobsService } from "./jobs.service";
+import { OrderJobsProcessor } from "./order-jobs.processor";
 
 @Module({
   imports: [
+    forwardRef(() => OrdersModule),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -15,7 +18,7 @@ import { JobsService } from "./jobs.service";
     }),
     BullModule.registerQueue({ name: ORDER_QUEUE }, { name: NOTIFICATION_QUEUE })
   ],
-  providers: [JobsService],
+  providers: [JobsService, OrderJobsProcessor],
   exports: [JobsService]
 })
 export class JobsModule {}
